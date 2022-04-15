@@ -26,15 +26,12 @@ def bs_put(S, K, T, r, sigma):
     return K * exp(-r * T) - S + bs_call(S, K, T, r, sigma)
 
 
-stock = 'SPY'
-expiry = '12-18-2022'
 strike_price = 370
 
 df = ASHARE_Select.TuShareGet.today('000001.sz')
-print(df.get_kline())
 
-#
-# sigma = np.sqrt(252) * df['returns'].std()
+sigma = np.sqrt(252) * df['return'].std()
+print(df.get_kline())
 # uty = (web.DataReader(
 #     "^TNX", 'yahoo', today.replace(day=today.day - 1), today)['Close'].iloc[-1]) / 100
 # lcp = df['Close'].iloc[-1]

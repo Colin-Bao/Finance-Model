@@ -9,6 +9,7 @@ class TuShareGet:
     ts_code = None
     start_date = None
     end_date = None
+    data_df = None
 
     def __init__(self, ts_code, start_date, end_date):
         self.ts_code, self.start_date, self.end_date = ts_code, start_date, end_date
@@ -26,7 +27,7 @@ class TuShareGet:
     def get_shares_list(self):
         return self.pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
 
-    def get_kline(self):
+    def get_kline(self, flag_return=True):
         def cal_return(df):
             # print(self.start_date)
             cal_df = df.sort_values(by="trade_date").dropna()
@@ -34,6 +35,11 @@ class TuShareGet:
             cal_df['return'] = ((cal_df.pre_close - cal_df.close_day_before) / cal_df.close_day_before)
             return cal_df
 
-        return cal_return(self.pro.daily(ts_code=self.ts_code, start_date=self.start_date, end_date=self.end_date))
+        self.data_df = self.pro.daily(ts_code=self.ts_code, start_date=self.start_date, end_date=self.end_date)
 
-# 查询当前所有正常上市交易的股票列表
+        if flag_return:
+            self.data_df = cal_return(self.data_df)
+
+        return self.data_df
+
+    # 查询当前所有正常上市交易的股票列表
