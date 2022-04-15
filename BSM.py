@@ -11,12 +11,16 @@ class BSMCalculate:
     S, K, T, r, sigma = 0.0, 0.0, 0.0, 0.0, 0.0
     share_name = None
     df_kline = None
+    date_dict = {'start_date': '', 'end_date': ''}
+
     bs_call = 0.0
     bs_put = 0.0
 
-    def __init__(self, K, share_name):
+    def __init__(self, K, share_name, date_dict):
+        # 自定义参数
         self.K = K
         self.share_name = share_name
+        self.date_dict = date_dict
 
         # 需要计算的参数
         self.df_kline = self.get_kline()
@@ -29,8 +33,16 @@ class BSMCalculate:
         self.cal_bs_put(self.S, self.K, self.T, self.r, self.sigma)
         self.cal_bs_call(self.S, self.K, self.T, self.r, self.sigma)
 
+    @classmethod
+    def today(cls, K, share_name):
+        now = datetime.now()
+        today = now.strftime('%Y%m%d')
+        one_year_ago = now.replace(year=now.year - 1).strftime('%Y%m%d')
+        return cls(K, share_name, {'start_date': one_year_ago, 'end_date': today})
+
     def get_kline(self):
-        return ASHARE_Select.TuShareGet.today().get_kline(self.share_name)
+        return ASHARE_Select.TuShareGet(self.date_dict['start_date'], self.date_dict['end_date']).get_kline(
+            self.share_name)
 
     def cal_s(self):
         return self.df_kline.iloc[-1]['pre_close']  # 取出最后一行数据（最新的）
@@ -69,5 +81,7 @@ class BSMCalculate:
         return [self.S, self.K, self.T, self.r, self.sigma, self.bs_call, self.bs_put]
 
 
-result = BSMCalculate(9, '000001.sz')
+result = BSMCalculate.today(9, '000001.sz')
+result_2 = BSMCalculate(9, '000001.sz', {'start_date': '20200101', 'end_date': '20210101'})
 print(result.get_result())
+print(result_2.get_result())
