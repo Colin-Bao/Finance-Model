@@ -7,11 +7,11 @@ from pandas import DataFrame
 import ASHARE_Select
 
 
-class BSMCalculate:
+class BSM:
     S, K, T, r, sigma = 0.0, 0.0, 0.0, 0.0, 0.0
     share_name = None
     df_kline = None
-    date_dict = {'start_date': '', 'end_date': ''}
+    date_dict = {'start_date': '', 'end_date': '', 'expiry_day': ''}
 
     d1 = 0.0
     d2 = 0.0
@@ -19,7 +19,7 @@ class BSMCalculate:
     bs_put = 0.0
 
     def __init__(self, K, share_name, date_dict):
-        # 自定义参数
+        # ----------- 自定义参数 ---------#
         self.K = K
         self.share_name = share_name
         self.date_dict = date_dict
@@ -28,8 +28,8 @@ class BSMCalculate:
         self.df_kline = self.get_kline()
         self.S = self.cal_s()
         self.sigma = self.cal_sigma()
-        self.cal_r()
-        self.cal_t()
+        self.r = self.cal_r()
+        self.t = self.cal_t()
 
         # 计算期权
         self.cal_bs_put(self.S, self.K, self.T, self.r, self.sigma)
@@ -48,7 +48,7 @@ class BSMCalculate:
 
     def cal_s(self):
         # print(self.df_kline.iloc[-1]['pre_close'])
-        return self.df_kline.iloc[-1]['pre_close'] * 6015730900  # 取出最后一行数据（最新的）
+        return self.df_kline.iloc[-1]['pre_close']  # 取出最后一行数据（最新的）
 
     def cal_sigma(self):
         return np.sqrt(252) * self.df_kline['return'].std()
@@ -60,22 +60,22 @@ class BSMCalculate:
         return risk_free_year_now
 
     def cal_t(self):
-        expiry_day = '20220606'
-        # t = (datetime.strptime(expiry_day, "%Y%m%d") - self.date_dict['end_date']).days / 365.0
-        t = 1
+        t = (datetime.strptime(self.date_dict['expiry_day'], "%Y%m%d") - datetime.strptime(
+            self.date_dict['end_date'], "%Y%m%d")).days / 365.0
         self.T = t
         return t
 
+    def cal_d1(self, S, K, T, r, sigma):
+        self.d1 = (log(S / K) + (r + sigma ** 2 / 2.0) * T) / (sigma * sqrt(T))
+        return self.d1
+
+    def cal_d2(self, S, K, T, r, sigma):
+        self.d2 = self.cal_d1(S, K, T, r, sigma) - sigma * sqrt(T)
+        return self.d2
+
     def cal_bs_call(self, S, K, T, r, sigma):
-        # 计算d1和d2
-        def cal_d1(S, K, T, r, sigma):
-            return (log(S / K) + (r + sigma ** 2 / 2.0) * T) / (sigma * sqrt(T))
-
-        def cal_d2(S, K, T, r, sigma):
-            return cal_d1(S, K, T, r, sigma) - sigma * sqrt(T)
-
-        self.d1 = cal_d1(S, K, T, r, sigma)
-        self.d2 = cal_d2(S, K, T, r, sigma)
+        self.d1 = self.cal_d1(S, K, T, r, sigma)
+        self.d2 = self.cal_d2(S, K, T, r, sigma)
 
         bs_call = S * norm.cdf(self.d1) - K * exp(-r * T) * norm.cdf(self.d2)
         self.bs_call = bs_call
@@ -83,14 +83,17 @@ class BSMCalculate:
 
     def cal_bs_put(self, S, K, T, r, sigma):
         self.bs_put = K * exp(-r * T) - S + self.cal_bs_call(S, K, T, r, sigma)
+        return self.bs_put
 
     def get_result(self):
         return [self.S, self.K, self.T, self.r, self.sigma, self.bs_call, self.bs_put]
 
+    def get_all_name(self):
+        return vars(self).keys()
 
-D = 154527413000 + 3354563900 * 0.5
-# result = BSMCalculate.today(D, '000001.sz')
-result_2 = BSMCalculate(D, '000651.sz', {'start_date': '20200101', 'end_date': '20210101'})
-d2 = result_2.d2
-print('原始数据:', result_2.get_result())
-print('PD:', norm.cdf(-result_2.d2))
+# D = 154527413000 + 3354563900 * 0.5
+# # result = BSMCalculate.today(D, '000001.sz')
+# result_2 = BSMCalculate(D, '000651.sz', {'start_date': '20200101', 'end_date': '20210101'})
+# d2 = result_2.d2
+# print('原始数据:', result_2.get_result())
+# print('PD:', norm.cdf(-result_2.d2))
