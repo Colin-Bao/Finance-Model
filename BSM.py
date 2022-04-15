@@ -13,6 +13,8 @@ class BSMCalculate:
     df_kline = None
     date_dict = {'start_date': '', 'end_date': ''}
 
+    d1 = 0.0
+    d2 = 0.0
     bs_call = 0.0
     bs_put = 0.0
 
@@ -45,7 +47,8 @@ class BSMCalculate:
             self.share_name)
 
     def cal_s(self):
-        return self.df_kline.iloc[-1]['pre_close']  # 取出最后一行数据（最新的）
+        # print(self.df_kline.iloc[-1]['pre_close'])
+        return self.df_kline.iloc[-1]['pre_close'] * 6015730900  # 取出最后一行数据（最新的）
 
     def cal_sigma(self):
         return np.sqrt(252) * self.df_kline['return'].std()
@@ -58,7 +61,8 @@ class BSMCalculate:
 
     def cal_t(self):
         expiry_day = '20220606'
-        t = (datetime.strptime(expiry_day, "%Y%m%d") - datetime.now()).days / 365.0
+        # t = (datetime.strptime(expiry_day, "%Y%m%d") - self.date_dict['end_date']).days / 365.0
+        t = 1
         self.T = t
         return t
 
@@ -70,7 +74,10 @@ class BSMCalculate:
         def cal_d2(S, K, T, r, sigma):
             return cal_d1(S, K, T, r, sigma) - sigma * sqrt(T)
 
-        bs_call = S * norm.cdf(cal_d1(S, K, T, r, sigma)) - K * exp(-r * T) * norm.cdf(cal_d2(S, K, T, r, sigma))
+        self.d1 = cal_d1(S, K, T, r, sigma)
+        self.d2 = cal_d2(S, K, T, r, sigma)
+
+        bs_call = S * norm.cdf(self.d1) - K * exp(-r * T) * norm.cdf(self.d2)
         self.bs_call = bs_call
         return bs_call
 
@@ -81,7 +88,9 @@ class BSMCalculate:
         return [self.S, self.K, self.T, self.r, self.sigma, self.bs_call, self.bs_put]
 
 
-result = BSMCalculate.today(9, '000001.sz')
-result_2 = BSMCalculate(9, '000001.sz', {'start_date': '20200101', 'end_date': '20210101'})
-print(result.get_result())
-print(result_2.get_result())
+D = 154527413000 + 3354563900 * 0.5
+# result = BSMCalculate.today(D, '000001.sz')
+result_2 = BSMCalculate(D, '000651.sz', {'start_date': '20200101', 'end_date': '20210101'})
+d2 = result_2.d2
+print('原始数据:', result_2.get_result())
+print('PD:', norm.cdf(-result_2.d2))
