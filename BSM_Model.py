@@ -90,10 +90,3 @@ class BSM:
 
     def get_all_name(self):
         return vars(self).keys()
-
-# D = 154527413000 + 3354563900 * 0.5
-# # result = BSMCalculate.today(D, '000001.sz')
-# result_2 = BSMCalculate(D, '000651.sz', {'start_date': '20200101', 'end_date': '20210101'})
-# d2 = result_2.d2
-# print('原始数据:', result_2.get_result())
-# print('PD:', norm.cdf(-result_2.d2))

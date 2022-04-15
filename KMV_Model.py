@@ -47,8 +47,3 @@ class KMV(BSM_Model.BSM):
 
     def cal_PD(self):
         return norm.cdf(-self.d2_KMV)
-
-
-KMV_new = KMV(100, '000651.sz', {'start_date': '20200101', 'end_date': '20210101', 'expiry_day': '20220101'},
-              154527413000, 3354563900, 6015730900)
-print(KMV_new.bs_call, KMV_new.bs_put, KMV_new.DD, KMV_new.PD, KMV_new.S, KMV_new.Share_MV)
