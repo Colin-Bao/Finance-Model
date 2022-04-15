@@ -11,23 +11,23 @@ class TuShareGet:
     end_date = None
     data_df = None
 
-    def __init__(self, ts_code, start_date, end_date):
-        self.ts_code, self.start_date, self.end_date = ts_code, start_date, end_date
+    def __init__(self, start_date, end_date):
+        self.start_date, self.end_date = start_date, end_date
         self.__TOKEN = '0c996bdea9d77679946a1c85dc2ee87b60dfad62b2d15f0f9a312603'
         ts.set_token(self.__TOKEN)
         self.pro = ts.pro_api()
 
     @classmethod
-    def today(cls, ts_code):
+    def today(cls):
         now = datetime.now()
         today = now.strftime('%Y%m%d')
         one_year_ago = now.replace(year=now.year - 1).strftime('%Y%m%d')
-        return cls(ts_code, one_year_ago, today)
+        return cls(one_year_ago, today)
 
     def get_shares_list(self):
         return self.pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
 
-    def get_kline(self, flag_return=True):
+    def get_kline(self, ts_code, flag_return=True):
         def cal_return(df):
             # print(self.start_date)
             cal_df = df.sort_values(by="trade_date").dropna()
@@ -35,6 +35,7 @@ class TuShareGet:
             cal_df['return'] = ((cal_df.pre_close - cal_df.close_day_before) / cal_df.close_day_before)
             return cal_df
 
+        self.ts_code = ts_code
         self.data_df = self.pro.daily(ts_code=self.ts_code, start_date=self.start_date, end_date=self.end_date)
 
         if flag_return:
@@ -42,4 +43,5 @@ class TuShareGet:
 
         return self.data_df
 
-    # 查询当前所有正常上市交易的股票列表
+    def get_shibor(self):
+        return self.pro.shibor(start_date=self.start_date, end_date=self.end_date)
