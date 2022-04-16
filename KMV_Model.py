@@ -1,6 +1,6 @@
 import BSM_Model
 from scipy.stats import norm
-from math import log, sqrt, pi, exp
+from math import log, sqrt
 
 
 class KMV(BSM_Model.BSM):
