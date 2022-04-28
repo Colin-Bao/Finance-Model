@@ -3,7 +3,9 @@ import KMV_Model
 
 if __name__ == '__main__':
     BSM_new = BSM_Model.BSM(100, '000651.sz',
-                            {'start_date': '20200101', 'end_date': '20210101', 'expiry_day': '20220101'})
+                            {'start_date': '20200101', 'end_date': '20210101', 'expiry_day': '20210101'})
+    # print(BSM_new.d1, BSM_new.d2, BSM_new.bs_put)
+    # print(BSM_new.get_result())
     # print(BSM_new.df_kline)
     # KMV_new = KMV_Model.KMV(100, '000651.sz',
     #                         {'start_date': '20200101', 'end_date': '20210101', 'expiry_day': '20220101'},

@@ -40,7 +40,8 @@ class TuShareGet:
         self.data_df = self.pro.daily(ts_code=self.ts_code, start_date=self.start_date, end_date=self.end_date)
 
         if flag_return:
-            self.data_df = cal_return(self.data_df)
+            pass
+            # self.data_df = cal_return(self.data_df)
 
         return self.data_df
 
