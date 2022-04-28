@@ -4,6 +4,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import ASHARE_Select
+# 导入matplotlib的pyplot模块
+import matplotlib.pyplot as plt
 
 
 class BSM:
@@ -36,17 +38,18 @@ class BSM:
                 return method
 
             def Default(self, o, o1):
-                return self.result
+                return self.result, o, o1
 
         # 参数区
         df_cal = None
         start_date, end_date, expiry_day = None, None, None
         T, S, K, r, sigma, d1, d2, bs_call, bs_put = None, None, None, None, None, None, None, None, None
 
-        def __init__(self, dataframe, date_dict):
+        def __init__(self, dataframe, date_dict, K):
             self.df_cal = dataframe
             self.start_date, self.end_date, self.expiry_day = date_dict['start_date'], date_dict['end_date'], date_dict[
                 'expiry_day']
+            self.K_value = K
             self.create_column()
 
         # 更新计算列
@@ -64,6 +67,7 @@ class BSM:
             self.bs_call = self.df_cal['call']
             self.bs_put = self.df_cal['put']
 
+        # 创造用于计算的列
         def create_column(self):
             cal_column = ['K', 'r_1y', 'expiry_t', 'sigma_1y', 'd1', 'd2', 'call', 'put']
             for cal in cal_column:
@@ -74,13 +78,16 @@ class BSM:
             self.update_column()
 
         # 控制外部访问的参数计算方法
-        def cal_para(self, para):
+        def switch_para(self, para):
             function_name = 'cal_' + para
             method = getattr(self, function_name, self.Default)
             return method
 
         # 筛选出持有期的所有行执行结果
         def cal_execute(self, para, cal_result):
+            # if para not in self.df_cal.columns:
+            #     self.df_cal[str(para)] = np.nan
+
             dt_start, dt_end = datetime.strptime(self.start_date, '%Y%m%d'), datetime.strptime(self.end_date,
                                                                                                '%Y%m%d')
             self.df_cal.loc[(pd.to_datetime(self.df_cal['trade_date'], format='%Y-%m-%d') <= dt_end) & (
@@ -90,9 +97,9 @@ class BSM:
 
         # --------------------------------------【参数计算区】----------------------------------------- #
 
-        # 筛选日期并计算sigma
-        def cal_K(self, value=100):
-            cal_result = value
+        # 筛选日期并计算K
+        def cal_K(self):
+            cal_result = self.K_value
             self.cal_execute('K', cal_result)
             return self.df_cal
 
@@ -142,7 +149,6 @@ class BSM:
 
         # 筛选日期并计算t
         def cal_t(self):
-
             # ------------------ 0.生成计算公式 ------------------ #
             dt_expiry = datetime.strptime(self.expiry_day, '%Y%m%d')
             cal_result = dt_expiry - pd.to_datetime(self.df_cal['trade_date'], format='%Y-%m-%d')
@@ -218,25 +224,150 @@ class BSM:
         def Default(self):
             return self.df_cal
 
+    # 可视化的内部类
+    class VisData:
+
+        def __init__(self, para, data=None):
+            self.df_data = data
+            self.switch_load(para)()
+
+        def switch_load(self, para):
+            function_name = 'load_data_from_' + para
+            method = getattr(self, function_name)
+            return method
+
+        def load_data_from_my(self):
+            # 生成数据
+            def create_option(S, K, T, r, sigma):
+                #
+                df_data = pd.DataFrame([np.arange(0.1, S, 1.0)]).transpose()
+
+                df_data.columns = ['S']
+                df_data['K'] = K
+                df_data['T'] = T
+                df_data['r'] = r
+                df_data['sigma'] = sigma
+                # print(df_data)
+
+                S = df_data['S']
+                K = df_data['K']
+                T = df_data['T']
+                r = df_data['r']
+                sigma = df_data['sigma']
+
+                def c_log(df):
+                    return df.apply(lambda x: log(x) if x != 0 else x)
+
+                def c_exp(df):
+                    return df.apply(lambda x: exp(x) if x != 0 else x)
+
+                def c_sqrt(df):
+                    return df.apply(lambda x: sqrt(x) if x != 0 else x)
+
+                def c_cdf(df):
+                    return df.apply(lambda x: norm.cdf(x) if x != 0 else x)
+
+                df_data['d1'] = (c_log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * c_sqrt(T))
+
+                df_data['d2'] = (c_log(S / K) + (r - sigma ** 2 / 2) * T) / (sigma * c_sqrt(T))
+
+                d1, d2 = df_data['d1'], df_data['d2']
+
+                df_data['call'] = S * c_cdf(d1) - K * c_exp(-r * T) * c_cdf(d2)
+                df_data['put'] = K * c_exp(-r * T) - S + df_data['call']
+                return df_data
+
+            # self.K * (my.cal('exp')(-self.r * self.T)) - self.S + self.bs_call
+
+            # 传入数据
+            self.df_data = create_option(50, 25, 0.5, 0.03, 0.3)
+
+            # 可视化
+
+            return self.df_data
+
+        def load_data_from_kline(self):
+            def select_date(self, df):
+                dt_start, dt_end = datetime.strptime(self.start_date, '%Y%m%d'), datetime.strptime(self.end_date,
+                                                                                                   '%Y%m%d')
+                df = df[(pd.to_datetime(df['trade_date'], format='%Y-%m-%d') <= dt_end) & (
+                        pd.to_datetime(df['trade_date'], format='%Y-%m-%d') >= dt_start)]
+                return df
+
+            def pic_time_trend():
+                df_time = self.select_date(self.df_vis)
+                x = df_time['trade_date']
+                price = df_time['pre_close']
+                call = df_time['call']
+                put = df_time['put']
+                plt.plot(x, price)
+                plt.plot(x, put)
+                plt.plot(x, call)
+                plt.show()
+                # print(df_time)
+
+                # print(self.df_vis)
+
+            def pic_c_p():
+                # df_time = self.select_date(self.df_vis)
+                df_time = self.df_data
+                x = df_time['pre_close']
+                call = df_time['call']
+                put = df_time['put']
+
+                fig = plt.figure()
+
+                ax = fig.add_subplot()
+
+                plt.scatter(x, call)
+                plt.xlim(0, 75)
+                plt.ylim(0, 75)
+                ax.set_aspect('equal', adjustable='box')
+
+                plt.show()
+
+            # self.df_vis = data
+            pic_c_p()
+
+        def vis_data(self, x_tag, y_tag):
+            df = self.df_data
+            x = df[x_tag]
+            y = df[y_tag]
+
+            fig = plt.figure()
+            ax = fig.add_subplot()
+
+            plt.scatter(x, y)
+            plt.xlim(0, 50)
+            plt.ylim(0, 50)
+            ax.set_aspect('equal', adjustable='box')
+
+            plt.show()
+
     # 类成员
     share_name = None
     df_kline = None
     date_dict = {'start_date': '', 'end_date': '', 'expiry_day': ''}
 
+    # 初始化类
     def __init__(self, K, share_name, date_dict):
         # ----------- 0.自定义参数输入 ---------#
-        self.K = K
         self.share_name = share_name
+        self.K = K
         self.date_dict = date_dict
         self.df_kline = self.get_kline()  # 往前一年获取
 
-        # ----------- 1.参数计算 ---------#
+        # ----------- 1.使用内部类来进行参数计算 ---------#
         self.cal_para_column()
 
-    # 下载数据
+        # ----------- 2.使用内部类来进行可视化 ---------#
+        self.vis_data()
+
+    # 加载数据
     def get_kline(self):
         file_name = self.share_name + '.csv'
 
+        # 如果文件存在
         try:
             df_kline = pd.read_csv(file_name)
 
@@ -258,27 +389,39 @@ class BSM:
 
         return df_kline
 
-    # 计算数据
-    def cal_para_column(self):
-
-        # 用于计算的内部类
-        cls_cal = self.CalParaColumn(self.df_kline, self.date_dict)
-
-        # 参数计算
-        self.df_kline = cls_cal.cal_para('K')()
-        self.df_kline = cls_cal.cal_para('r')()
-        self.df_kline = cls_cal.cal_para('t')()
-        self.df_kline = cls_cal.cal_para('sigma')()
-        self.df_kline = cls_cal.cal_para('d1')()
-        self.df_kline = cls_cal.cal_para('d2')()
-        self.df_kline = cls_cal.cal_para('c')()
-        self.df_kline = cls_cal.cal_para('p')()
-
-        # 更新数据
-        self.save_data(self.df_kline)
-
     # 保存数据
     def save_data(self, df_kline):
         file_name = self.share_name + '.csv'
         # 储存要记得index为False
         df_kline.to_csv(file_name, index=False)
+
+    # 计算数据
+    def cal_para_column(self):
+
+        # 用于计算的内部类
+        cls_cal = self.CalParaColumn(self.df_kline, self.date_dict, self.K)
+
+        # 参数计算
+        self.df_kline = cls_cal.switch_para('K')()
+        self.df_kline = cls_cal.switch_para('r')()
+        self.df_kline = cls_cal.switch_para('t')()
+        self.df_kline = cls_cal.switch_para('sigma')()
+        self.df_kline = cls_cal.switch_para('d1')()
+        self.df_kline = cls_cal.switch_para('d2')()
+        self.df_kline = cls_cal.switch_para('c')()
+        self.df_kline = cls_cal.switch_para('p')()
+
+        # 更新数据
+        self.save_data(self.df_kline)
+
+    # 可视化数据
+    def vis_data(self):
+        vis = self.VisData('my')
+        # vis_df.
+        vis.vis_data('S', 'call')
+        # vis.vis_data('S', 'put')
+        vis_2 = self.VisData('kline', self.df_kline)
+        # vis_2.vis_data('pre_close', 'call')
+
+        # vis.pic_time_trend()
+        # vis.pic_c_p()
