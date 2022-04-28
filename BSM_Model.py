@@ -384,6 +384,8 @@ class BSM:
         # S, K, T, r, sigma
         vis = self.VisData('my', [50, 25, 1, 0.03, 0.3])
         vis.vis_data('S', 'call', 50)
+        vis.vis_data('S', 'put', 50)
 
         vis_2 = self.VisData('kline', self.df_kline)
         vis_2.vis_data('pre_close', 'call', 75)
+        vis_2.vis_data('pre_close', 'put', 75)
