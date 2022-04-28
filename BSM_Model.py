@@ -226,17 +226,17 @@ class BSM:
 
     # 可视化的内部类
     class VisData:
+        df_vis = None
 
-        def __init__(self, para, data=None):
-            self.df_data = data
-            self.switch_load(para)()
+        def __init__(self, para, set_data):
+            self.switch_load(para)(set_data)
 
         def switch_load(self, para):
             function_name = 'load_data_from_' + para
             method = getattr(self, function_name)
             return method
 
-        def load_data_from_my(self):
+        def load_data_from_my(self, set_data):
             # 生成数据
             def create_option(S, K, T, r, sigma):
                 #
@@ -280,57 +280,22 @@ class BSM:
             # self.K * (my.cal('exp')(-self.r * self.T)) - self.S + self.bs_call
 
             # 传入数据
-            self.df_data = create_option(50, 25, 0.5, 0.03, 0.3)
+            self.df_vis = create_option(set_data[0], set_data[1], set_data[2], set_data[3], set_data[4])
 
             # 可视化
 
-            return self.df_data
+            return self.df_vis
 
-        def load_data_from_kline(self):
-            def select_date(self, df):
-                dt_start, dt_end = datetime.strptime(self.start_date, '%Y%m%d'), datetime.strptime(self.end_date,
-                                                                                                   '%Y%m%d')
-                df = df[(pd.to_datetime(df['trade_date'], format='%Y-%m-%d') <= dt_end) & (
-                        pd.to_datetime(df['trade_date'], format='%Y-%m-%d') >= dt_start)]
-                return df
+        def load_data_from_kline(self, set_data):
+            self.df_vis = set_data
+            return self.df_vis
 
-            def pic_time_trend():
-                df_time = self.select_date(self.df_vis)
-                x = df_time['trade_date']
-                price = df_time['pre_close']
-                call = df_time['call']
-                put = df_time['put']
-                plt.plot(x, price)
-                plt.plot(x, put)
-                plt.plot(x, call)
-                plt.show()
-                # print(df_time)
+        def load_data_from_other(self, set_attr):
+            self.df_vis = set_attr
+            return self.df_vis
 
-                # print(self.df_vis)
-
-            def pic_c_p():
-                # df_time = self.select_date(self.df_vis)
-                df_time = self.df_data
-                x = df_time['pre_close']
-                call = df_time['call']
-                put = df_time['put']
-
-                fig = plt.figure()
-
-                ax = fig.add_subplot()
-
-                plt.scatter(x, call)
-                plt.xlim(0, 75)
-                plt.ylim(0, 75)
-                ax.set_aspect('equal', adjustable='box')
-
-                plt.show()
-
-            # self.df_vis = data
-            pic_c_p()
-
-        def vis_data(self, x_tag, y_tag):
-            df = self.df_data
+        def vis_data(self, x_tag, y_tag, scale):
+            df = self.df_vis
             x = df[x_tag]
             y = df[y_tag]
 
@@ -338,8 +303,8 @@ class BSM:
             ax = fig.add_subplot()
 
             plt.scatter(x, y)
-            plt.xlim(0, 50)
-            plt.ylim(0, 50)
+            plt.xlim(0, scale)
+            plt.ylim(0, scale)
             ax.set_aspect('equal', adjustable='box')
 
             plt.show()
@@ -416,12 +381,9 @@ class BSM:
 
     # 可视化数据
     def vis_data(self):
-        vis = self.VisData('my')
-        # vis_df.
-        vis.vis_data('S', 'call')
-        # vis.vis_data('S', 'put')
-        vis_2 = self.VisData('kline', self.df_kline)
-        # vis_2.vis_data('pre_close', 'call')
+        # S, K, T, r, sigma
+        vis = self.VisData('my', [50, 25, 1, 0.03, 0.3])
+        vis.vis_data('S', 'call', 50)
 
-        # vis.pic_time_trend()
-        # vis.pic_c_p()
+        vis_2 = self.VisData('kline', self.df_kline)
+        vis_2.vis_data('pre_close', 'call', 75)
