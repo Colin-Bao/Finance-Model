@@ -31,6 +31,7 @@ class TuShareGet:
         def cal_return(df):
             # print(self.start_date)
             cal_df = df.sort_values(by="trade_date").dropna()
+            # assign是在新增计算行的时候同时增加
             cal_df = cal_df.assign(close_day_before=cal_df.pre_close.shift(1))
             cal_df['return'] = ((cal_df.pre_close - cal_df.close_day_before) / cal_df.close_day_before)
             return cal_df
