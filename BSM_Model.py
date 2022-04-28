@@ -7,27 +7,7 @@ import ASHARE_Select
 
 
 class BSM:
-    share_name = None
-    df_kline = None
-    date_dict = {'start_date': '', 'end_date': '', 'expiry_day': ''}
-
-    def __init__(self, K, share_name, date_dict):
-        # ----------- 0.自定义参数输入 ---------#
-        self.K = K
-        self.share_name = share_name
-        self.date_dict = date_dict
-        self.df_kline = self.get_kline()  # 往前一年获取
-
-        # ----------- 1.参数计算 ---------#
-        self.cal_hold_date_column()
-
-    # 保存dataframe
-    def save_data(self, df_kline):
-        file_name = self.share_name + '.csv'
-        # 储存要记得index为False
-        df_kline.to_csv(file_name, index=False)
-
-    # 计算参数的类
+    # 计算参数的内部类
     class CalParaColumn:
 
         # 自定义计算函数 sqrt exp log cdf
@@ -238,24 +218,22 @@ class BSM:
         def Default(self):
             return self.df_cal
 
-    def cal_hold_date_column(self):
+    # 类成员
+    share_name = None
+    df_kline = None
+    date_dict = {'start_date': '', 'end_date': '', 'expiry_day': ''}
 
-        # 用于计算的内部类
-        cls_cal = self.CalParaColumn(self.df_kline, self.date_dict)
+    def __init__(self, K, share_name, date_dict):
+        # ----------- 0.自定义参数输入 ---------#
+        self.K = K
+        self.share_name = share_name
+        self.date_dict = date_dict
+        self.df_kline = self.get_kline()  # 往前一年获取
 
-        # 参数计算
-        self.df_kline = cls_cal.cal_para('K')()
-        self.df_kline = cls_cal.cal_para('r')()
-        self.df_kline = cls_cal.cal_para('t')()
-        self.df_kline = cls_cal.cal_para('sigma')()
-        self.df_kline = cls_cal.cal_para('d1')()
-        self.df_kline = cls_cal.cal_para('d2')()
-        self.df_kline = cls_cal.cal_para('c')()
-        self.df_kline = cls_cal.cal_para('p')()
+        # ----------- 1.参数计算 ---------#
+        self.cal_para_column()
 
-        # 更新数据
-        self.save_data(self.df_kline)
-
+    # 下载数据
     def get_kline(self):
         file_name = self.share_name + '.csv'
 
@@ -279,3 +257,28 @@ class BSM:
             df_kline.to_csv(file_name)
 
         return df_kline
+
+    # 计算数据
+    def cal_para_column(self):
+
+        # 用于计算的内部类
+        cls_cal = self.CalParaColumn(self.df_kline, self.date_dict)
+
+        # 参数计算
+        self.df_kline = cls_cal.cal_para('K')()
+        self.df_kline = cls_cal.cal_para('r')()
+        self.df_kline = cls_cal.cal_para('t')()
+        self.df_kline = cls_cal.cal_para('sigma')()
+        self.df_kline = cls_cal.cal_para('d1')()
+        self.df_kline = cls_cal.cal_para('d2')()
+        self.df_kline = cls_cal.cal_para('c')()
+        self.df_kline = cls_cal.cal_para('p')()
+
+        # 更新数据
+        self.save_data(self.df_kline)
+
+    # 保存数据
+    def save_data(self, df_kline):
+        file_name = self.share_name + '.csv'
+        # 储存要记得index为False
+        df_kline.to_csv(file_name, index=False)
