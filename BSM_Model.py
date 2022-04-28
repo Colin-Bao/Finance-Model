@@ -228,8 +228,8 @@ class BSM:
     class VisData:
         df_vis = None
 
-        def __init__(self, para, set_data):
-            self.switch_load(para)(set_data)
+        def __init__(self):
+            self.cls_plt = plt
 
         def switch_load(self, para):
             function_name = 'load_data_from_' + para
@@ -237,6 +237,14 @@ class BSM:
             return method
 
         def load_data_from_my(self, set_data):
+            # 生成参考线
+            def abline(slope, intercept):
+                """Plot a line from slope and intercept"""
+                axes = self.cls_plt.gca()
+                x_vals = np.array(axes.get_xlim())
+                y_vals = intercept + slope * x_vals
+                self.cls_plt.plot(x_vals, y_vals, '--')
+
             # 生成数据
             def create_option(S, K, T, r, sigma):
                 #
@@ -283,38 +291,49 @@ class BSM:
             self.df_vis = create_option(set_data[0], set_data[1], set_data[2], set_data[3], set_data[4])
 
             # 可视化
+            self.vis_data('S', 'call', 50)
+            abline(1, 0)
+            abline(1, - set_data[1] * exp(-set_data[2] * set_data[3]))
+            self.cls_plt.show()
 
-            return self.df_vis
+            # 可视化
+            self.vis_data('S', 'put', 50)
+            abline(0, set_data[1] * exp(-set_data[2] * set_data[3]))
+            abline(-1, set_data[1] * exp(-set_data[2] * set_data[3]))
+            # abline(1, set_data[1])
+            self.cls_plt.show()
 
         def load_data_from_kline(self, set_data):
             self.df_vis = set_data
-            return self.df_vis
+            self.vis_data('pre_close', 'call', 75)
+            self.cls_plt.show()
+            self.vis_data('pre_close', 'put', 75)
+            self.cls_plt.show()
 
-        def load_data_from_other(self, set_attr):
-            self.df_vis = set_attr
-            return self.df_vis
+        def load_data_from_other(self, set_data):
+            self.df_vis = set_data
 
         def vis_data(self, x_tag, y_tag, scale):
             df = self.df_vis
+
             x = df[x_tag]
             y = df[y_tag]
 
-            fig = plt.figure()
+            fig = self.cls_plt.figure()
             ax = fig.add_subplot()
 
-            plt.scatter(x, y)
-            plt.xlim(0, scale)
-            plt.ylim(0, scale)
+            self.cls_plt.scatter(x, y)
+            self.cls_plt.xlim(0, scale)
+            self.cls_plt.ylim(0, scale)
             ax.set_aspect('equal', adjustable='box')
-
-            plt.show()
+            # self.cls_plt.show()
 
     # 类成员
     share_name = None
     df_kline = None
     date_dict = {'start_date': '', 'end_date': '', 'expiry_day': ''}
 
-    # 初始化类
+    # 初始化类 输入K, share_name, date_dict初始化，得到所有参数生成df
     def __init__(self, K, share_name, date_dict):
         # ----------- 0.自定义参数输入 ---------#
         self.share_name = share_name
@@ -326,7 +345,7 @@ class BSM:
         self.cal_para_column()
 
         # ----------- 2.使用内部类来进行可视化 ---------#
-        self.vis_data()
+        # self.vis_data()
 
     # 加载数据
     def get_kline(self):
@@ -380,12 +399,14 @@ class BSM:
         self.save_data(self.df_kline)
 
     # 可视化数据
-    def vis_data(self):
-        # S, K, T, r, sigma
-        vis = self.VisData('my', [50, 25, 1, 0.03, 0.3])
-        vis.vis_data('S', 'call', 50)
-        vis.vis_data('S', 'put', 50)
+    def show_data(self, para, data):
+        # 用类来生成
+        vis = self.VisData()
 
-        vis_2 = self.VisData('kline', self.df_kline)
-        vis_2.vis_data('pre_close', 'call', 75)
-        vis_2.vis_data('pre_close', 'put', 75)
+        if para == 'kline':
+            # 加载数据到VisData类中的df_vis
+            vis.switch_load(para)(data)
+
+        elif para == 'my':
+            # 加载数据到VisData类中的df_vis
+            vis.switch_load(para)(data)
