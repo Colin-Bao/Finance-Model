@@ -1,6 +1,4 @@
 import BSM_Model
-import numpy as np
-import pandas as pd
 
 # if __name__ == '__main__':
 # 用K，S，t完成初始化
