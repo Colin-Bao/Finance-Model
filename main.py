@@ -7,3 +7,5 @@ if __name__ == '__main__':
     # 可视化
     # BSM.show_data('kline', BSM.df_kline)
     BSM.show_data('my', (50, 25, 1, 0.03, 0.3))
+
+    #
