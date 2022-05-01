@@ -15,7 +15,7 @@ import Data_Generate
 # 存储 df 并进行计算
 class DA:
     # 自定义计算函数 sqrt exp log cdf
-    class Cal:
+    class CalFunction:
         def __init__(self, para, df_num):
             self.result = self.cal(para)(df_num)
 
@@ -103,6 +103,11 @@ class DA:
         self.cal_execute(create_column, cal_result, execute_rule)
 
         return cal_result
+
+    def cal_dummy(self, tar_column, create_column='dummy', execute_rule=None):
+        cal_result = 1
+        self.cal_execute(create_column, cal_result, execute_rule)
+        return ((self.df_DA[tar_column] - self.df_DA.price_before) / self.df_DA.price_before)
 
     # 筛选出持有期的所有行执行结果
     def cal_execute(self, create_column, cal_result, execute_rule=None):

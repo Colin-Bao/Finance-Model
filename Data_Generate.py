@@ -12,19 +12,30 @@ from datetime import datetime
 
 
 class MyData:
-    def __init__(self, row, column=2):
+    def __init__(self, row, column):
         self.date_df = pd.DataFrame()
-        # str_column = list(str(range(column)))
-        for i in list(range(column)):
-            self.date_df[str(i)] = np.random.normal(0, 1, row)
-
-        self.date_df['date'] = pd.date_range(start=datetime.now(), periods=row, freq="-1D")
-
+        self.ge_shape(column, row)
+        self.ge_time(row)
         # print(self.date_df.columns)
         self.date_plt = plt
 
     def distri_data(self):
         return self.date_df
+
+    def ge_shape(self, column, row):
+
+        if type(column) is int:
+            for i in list(range(column)):
+                self.date_df[str(i)] = np.random.normal(0, 1, row)
+
+        elif type(column) is list:
+            # self.date_df.columns = colum
+            self.date_df = pd.DataFrame(columns=column)
+            for i in column:
+                self.date_df[i] = np.random.normal(0, 1, row)
+
+    def ge_time(self, row):
+        self.date_df['date'] = pd.date_range(start=datetime.now(), periods=row, freq="-1D", normalize=True)
 
     def finance_data(self):
         return self.date_df
